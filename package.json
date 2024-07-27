@@ -1,0 +1,23 @@
+{
+	"name": "learn-thyseus",
+	"version": "0.1.0",
+	"description": "",
+	"author": "",
+	"license": "MIT",
+	"main": "src/index.ts",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build"
+	},
+	"keywords": [],
+	"dependencies": {
+		"@thyseus/math": "^0.1.0",
+		"thyseus": "^0.18.0"
+	},
+	"devDependencies": {
+		"@thyseus/rollup-plugin-thyseus": "^0.18.0",
+		"typescript": "^5.5.4",
+		"vite": "^5.3.5"
+	}
+}
