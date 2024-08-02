@@ -1,58 +1,7 @@
-import { And, World, Schedule, Entity, Query, Res, Tag, With, Plugin } from 'thyseus';
+import { World, Schedule, Entity, Query, Res, Tag, With } from 'thyseus';
 import { Vec2 } from '@thyseus/math';
-
-class Mouse {
-	pos: Vec2;
-	target: HTMLElement;
-	constructor(target: HTMLElement) {
-		this.pos = new Vec2(0, 0);
-		this.target = target;
-	}
-	start() {
-		this.target.addEventListener("mousemove", (event) => this.handle_mousemove(event));
-	}
-	handle_mousemove(event: MouseEvent) {
-		this.pos.x = event.clientX;
-		this.pos.y = event.clientY;
-	}
-	static plugin: (schedule: typeof Schedule, target: HTMLElement) => Plugin
-		= (schedule, target) => (world: World) => {
-			world.insertResource(new Mouse(target));
-			world.addSystems(schedule, prepareMouse);
-		}
-}
-function prepareMouse(mouse: Res<Mouse>) {
-	mouse.start()
-}
-
-type Code = KeyboardEvent["code"];
-class Keyboard {
-	target: HTMLElement;
-	keys: Map<Code, boolean> = new Map();
-	constructor(target: HTMLElement) {
-		this.target = target;
-	}
-	start() {
-		this.target.addEventListener("keydown", (event) => this.handle_keydown(event));
-		this.target.addEventListener("keyup", (event) => this.handle_keyup(event));
-	}
-	isDown(code: Code): boolean {
-		return this.keys.get(code) ?? false;
-	}
-	handle_keydown(event: KeyboardEvent) {
-		this.keys.set(event.code, true);
-	}
-	handle_keyup(event: KeyboardEvent) {
-		this.keys.set(event.code, false);
-	}
-	static plugin: (schedule: typeof Schedule, target: HTMLElement) => Plugin = (schedule, target) => (world: World) => {
-		world.insertResource(new Keyboard(target));
-		world.addSystems(schedule, prepareKeyboard);
-	}
-}
-function prepareKeyboard(keyboard: Res<Keyboard>) {
-	keyboard.start()
-}
+import { Mouse } from "./Mouse";
+import { Keyboard } from "./Keyboard";
 
 class Position extends Vec2 { };
 class Velocity extends Vec2 { };
@@ -109,6 +58,7 @@ function renderPlayerSystem(player: Query<[Position], With<IsPlayer>>) {
 }
 
 class PrepareSchedule extends Schedule { }
+class StopSchedule extends Schedule { }
 
 function start(world: World) {
 	world.runSchedule(PrepareSchedule);
@@ -118,11 +68,15 @@ function start(world: World) {
 	}
 	loop();
 }
+function stop(world: World) {
+	world.runSchedule(StopSchedule);
+}
 
 const world = await new World()
 	.addEventListener('start', start)
-	.addPlugin(Mouse.plugin(PrepareSchedule, document.body))
-	.addPlugin(Keyboard.plugin(PrepareSchedule, document.body))
+	.addEventListener('stop', stop)
+	.addPlugin(Mouse.plugin(PrepareSchedule, StopSchedule, document.body))
+	.addPlugin(Keyboard.plugin(PrepareSchedule, StopSchedule, document.body))
 	.addSystems(Schedule, renderPlayerSystem)
 	.addSystems(Schedule, renderBallSystem)
 	.addSystems(Schedule, renderCursorSystem)
