@@ -1,18 +1,28 @@
-import { And,World, Schedule, Entity, Query, Res, Tag, With } from 'thyseus';
+import { And, World, Schedule, Entity, Query, Res, Tag, With, Plugin } from 'thyseus';
 import { Vec2 } from '@thyseus/math';
 
 class Mouse {
-	x: number = 0;
-	y: number = 0;
+	pos: Vec2;
 	target: HTMLElement;
 	constructor(target: HTMLElement) {
+		this.pos = new Vec2(0, 0);
 		this.target = target;
-		document.body.addEventListener("mousemove", (event) => this.handle_mousemove(event));
+	}
+	start() {
+		this.target.addEventListener("mousemove", (event) => this.handle_mousemove(event));
 	}
 	handle_mousemove(event: MouseEvent) {
-		this.x = event.clientX;
-		this.y = event.clientY;
+		this.pos.x = event.clientX;
+		this.pos.y = event.clientY;
 	}
+	static plugin: (schedule: typeof Schedule, target: HTMLElement) => Plugin
+		= (schedule, target) => (world: World) => {
+			world.insertResource(new Mouse(target));
+			world.addSystems(schedule, prepareMouse);
+		}
+}
+function prepareMouse(mouse: Res<Mouse>) {
+	mouse.start()
 }
 
 type Code = KeyboardEvent["code"];
@@ -21,8 +31,10 @@ class Keyboard {
 	keys: Map<Code, boolean> = new Map();
 	constructor(target: HTMLElement) {
 		this.target = target;
-		document.body.addEventListener("keydown", (event) => this.handle_keydown(event));
-		document.body.addEventListener("keyup", (event) => this.handle_keyup(event));
+	}
+	start() {
+		this.target.addEventListener("keydown", (event) => this.handle_keydown(event));
+		this.target.addEventListener("keyup", (event) => this.handle_keyup(event));
 	}
 	isDown(code: Code): boolean {
 		return this.keys.get(code) ?? false;
@@ -33,12 +45,19 @@ class Keyboard {
 	handle_keyup(event: KeyboardEvent) {
 		this.keys.set(event.code, false);
 	}
+	static plugin: (schedule: typeof Schedule, target: HTMLElement) => Plugin = (schedule, target) => (world: World) => {
+		world.insertResource(new Keyboard(target));
+		world.addSystems(schedule, prepareKeyboard);
+	}
+}
+function prepareKeyboard(keyboard: Res<Keyboard>) {
+	keyboard.start()
 }
 
-class Position extends Vec2 {};
-class Velocity extends Vec2 {};
-class IsPlayer extends Tag {};
-class IsBall extends Tag {};
+class Position extends Vec2 { };
+class Velocity extends Vec2 { };
+class IsPlayer extends Tag { };
+class IsBall extends Tag { };
 
 function moveSystem(query: Query<[Position, Velocity]>) {
 	for (const [pos, vel] of query) {
@@ -58,12 +77,10 @@ function renderBallSystem(query: Query<[Position], With<IsBall>>) {
 
 const cursorElement = document.querySelector("#cursor")! as HTMLDivElement;
 
-function updateCursorSystem(mouse: Res<Mouse>) {
-	cursorElement.style.left = `${mouse.x}px`;
-	cursorElement.style.top = `${mouse.y}px`;
+function renderCursorSystem(mouse: Res<Mouse>) {
+	cursorElement.style.left = `${mouse.pos.x}px`;
+	cursorElement.style.top = `${mouse.pos.y}px`;
 }
-
-const playerElement = document.querySelector("#player")! as HTMLDivElement;
 
 function updatePlayerSystem(keyboard: Res<Keyboard>, player: Query<[Position], With<IsPlayer>>) {
 	for (const [position] of player) {
@@ -77,10 +94,12 @@ function updatePlayerSystem(keyboard: Res<Keyboard>, player: Query<[Position], W
 			position.x -= 1;
 		}
 		if (keyboard.isDown("KeyL")) {
-			position.y += 1;
+			position.x += 1;
 		}
 	}
 }
+
+const playerElement = document.querySelector("#player")! as HTMLDivElement;
 
 function renderPlayerSystem(player: Query<[Position], With<IsPlayer>>) {
 	for (const [position] of player) {
@@ -89,7 +108,10 @@ function renderPlayerSystem(player: Query<[Position], With<IsPlayer>>) {
 	}
 }
 
+class PrepareSchedule extends Schedule { }
+
 function start(world: World) {
+	world.runSchedule(PrepareSchedule);
 	async function loop() {
 		await world.runSchedule(Schedule);
 		requestAnimationFrame(loop);
@@ -98,12 +120,12 @@ function start(world: World) {
 }
 
 const world = await new World()
-	.insertResource(new Mouse(document.body))
-	.insertResource(new Keyboard(document.body))
 	.addEventListener('start', start)
-	.addSystems(Schedule, renderBallSystem)
-	.addSystems(Schedule, updateCursorSystem)
+	.addPlugin(Mouse.plugin(PrepareSchedule, document.body))
+	.addPlugin(Keyboard.plugin(PrepareSchedule, document.body))
 	.addSystems(Schedule, renderPlayerSystem)
+	.addSystems(Schedule, renderBallSystem)
+	.addSystems(Schedule, renderCursorSystem)
 	.addSystems(Schedule, moveSystem)
 	.addSystems(Schedule, updatePlayerSystem)
 	.prepare();
