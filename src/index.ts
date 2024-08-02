@@ -60,9 +60,11 @@ function renderPlayerSystem(player: Query<[Position], With<IsPlayer>>) {
 class PrepareSchedule extends Schedule { }
 class StopSchedule extends Schedule { }
 
+let stopped = false;
 function start(world: World) {
 	world.runSchedule(PrepareSchedule);
 	async function loop() {
+		if (stopped) return;
 		await world.runSchedule(Schedule);
 		requestAnimationFrame(loop);
 	}
@@ -70,6 +72,7 @@ function start(world: World) {
 }
 function stop(world: World) {
 	world.runSchedule(StopSchedule);
+	stopped = true;
 }
 
 const world = await new World()
@@ -103,3 +106,4 @@ createBall(world);
 createPlayer(world);
 
 world.start();
+setTimeout(() => world.stop(), 10_000);
