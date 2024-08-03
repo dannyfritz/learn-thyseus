@@ -13,10 +13,12 @@
 	"keywords": [],
 	"dependencies": {
 		"@thyseus/math": "^0.1.0",
+		"howler": "^2.2.4",
 		"thyseus": "^0.18.0"
 	},
 	"devDependencies": {
 		"@thyseus/rollup-plugin-thyseus": "^0.18.0",
+		"@types/howler": "^2.2.11",
 		"typescript": "^5.5.4",
 		"vite": "^5.3.5"
 	}

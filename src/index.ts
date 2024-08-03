@@ -1,12 +1,32 @@
-import { World, Schedule, Entity, Query, Res, Tag, With } from 'thyseus';
+import { World, Schedule, Entity, Query, Res, Tag, With, EventWriter, EventReader } from 'thyseus';
 import { Vec2 } from '@thyseus/math';
 import { Mouse } from "./Mouse";
 import { Keyboard } from "./Keyboard";
+import { Howl } from "howler";
+
+const kaboomSound = new URL(`../hit.wav`, import.meta.url).href;
 
 class Position extends Vec2 { };
 class Velocity extends Vec2 { };
 class IsPlayer extends Tag { };
 class IsBall extends Tag { };
+
+type Event =
+	| "NOOP"
+	| "KABOOM";
+
+class GameEvent {
+	public event: Event;
+	constructor(event: Event) {
+		this.event = event;
+	};
+}
+ 
+function kaboom(mouse: Res<Mouse>, gameEvents: EventWriter<GameEvent>) {
+	if (mouse.isPressed(0)) {
+		gameEvents.create(new GameEvent("KABOOM"));
+	}
+}
 
 function moveSystem(query: Query<[Position, Velocity]>) {
 	for (const [pos, vel] of query) {
@@ -57,8 +77,22 @@ function renderPlayerSystem(player: Query<[Position], With<IsPlayer>>) {
 	}
 }
 
+function renderAudio(gameEvents: EventReader<GameEvent>) {
+	for (const gameEvent of gameEvents) {
+		const sound = new Howl({
+  		src: [kaboomSound]
+		});
+		sound.play();
+	}
+}
+
+
 class PrepareSchedule extends Schedule { }
 class StopSchedule extends Schedule { }
+
+function cleanup(gameEvents: EventWriter<GameEvent>) {
+	gameEvents.clear();
+}
 
 let stopped = false;
 function start(world: World) {
@@ -80,11 +114,14 @@ const world = await new World()
 	.addEventListener('stop', stop)
 	.addPlugin(Mouse.plugin(PrepareSchedule, StopSchedule, document.body))
 	.addPlugin(Keyboard.plugin(PrepareSchedule, StopSchedule, document.body))
+	.addSystems(Schedule, kaboom)
 	.addSystems(Schedule, renderPlayerSystem)
 	.addSystems(Schedule, renderBallSystem)
 	.addSystems(Schedule, renderCursorSystem)
 	.addSystems(Schedule, moveSystem)
 	.addSystems(Schedule, updatePlayerSystem)
+	.addSystems(Schedule, renderAudio)
+	.addSystems(Schedule, cleanup)
 	.prepare();
 
 function createBall(world: World): Entity {
