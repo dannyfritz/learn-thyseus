@@ -100,7 +100,7 @@ const world = await new World()
 function createBall(world: World): Entity {
 	const entity = world.spawn();
 	entity.addType(IsBall)
-	entity.add(new Velocity(1, 1));
+	entity.add(new Velocity(20, 10));
 	entity.add(new Position(0, 0));
 	return entity;
 }
