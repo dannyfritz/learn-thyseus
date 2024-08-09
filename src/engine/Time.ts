@@ -30,5 +30,6 @@ export class Time {
   }
   start() {
     this.#lastTime = performance.now();
+    this.time = 0;
   }
 }
