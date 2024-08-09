@@ -1,9 +1,9 @@
-import { World, Schedule, Entity, Query, Res, Tag, With, EventWriter, EventReader } from 'thyseus';
+import { World, Entity, Query, Res, Tag, With, EventWriter, EventReader } from 'thyseus';
 import { Mouse } from "./engine/Mouse";
 import { Keyboard } from "./engine/Keyboard";
 import { Howl } from "howler";
 import { Position, updateVelocitySystem, Velocity } from './engine/Physics';
-import { AfterSchedule, baseEnginePlugin, PrepareSchedule, StopSchedule } from './engine/Loop';
+import { AfterSchedule, baseEnginePlugin, MainSchedule, StartSchedule, StopSchedule } from './engine/baseEngine';
 
 const kaboomSound = new URL(`../hit.wav`, import.meta.url).href;
 const sound = new Howl({
@@ -85,15 +85,15 @@ function renderAudio(gameEvents: EventReader<GameEvent>) {
 
 const world = await new World()
 	.addPlugin(baseEnginePlugin)
-	.addPlugin(Mouse.plugin(PrepareSchedule, StopSchedule, document.body))
-	.addPlugin(Keyboard.plugin(PrepareSchedule, StopSchedule, document.body))
-	.addSystems(Schedule, kaboom)
-	.addSystems(Schedule, renderPlayerSystem)
-	.addSystems(Schedule, renderBallSystem)
-	.addSystems(Schedule, renderCursorSystem)
-	.addSystems(Schedule, renderAudio)
-	.addSystems(Schedule, updateVelocitySystem)
-	.addSystems(Schedule, updatePlayerSystem)
+	.addPlugin(Mouse.plugin(StartSchedule, StopSchedule, document.body))
+	.addPlugin(Keyboard.plugin(StartSchedule, StopSchedule, document.body))
+	.addSystems(MainSchedule, kaboom)
+	.addSystems(MainSchedule, renderPlayerSystem)
+	.addSystems(MainSchedule, renderBallSystem)
+	.addSystems(MainSchedule, renderCursorSystem)
+	.addSystems(MainSchedule, renderAudio)
+	.addSystems(MainSchedule, updateVelocitySystem)
+	.addSystems(MainSchedule, updatePlayerSystem)
 	.addSystems(AfterSchedule, cleanupEvents)
 	.prepare();
 

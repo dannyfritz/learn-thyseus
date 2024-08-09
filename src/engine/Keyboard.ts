@@ -1,23 +1,23 @@
 import { World, Schedule, Res, Plugin } from 'thyseus';
 import { Vec2 } from '@thyseus/math';
 
-const keyboardPrepare = (keyboard: Res<Keyboard>) => {
+const start = (keyboard: Res<Keyboard>) => {
   keyboard.start()
 }
-const keyboardCleanup = (keyboard: Res<Keyboard>) => {
+const stop = (keyboard: Res<Keyboard>) => {
   keyboard.stop();
 }
-const keyboardPlugin = (prepareSchedule: typeof Schedule, stopSchedule: typeof Schedule, targetHtmlElement: HTMLElement): Plugin =>
+const plugin = (startSchedule: typeof Schedule, stopSchedule: typeof Schedule, targetHtmlElement: HTMLElement): Plugin =>
   (world: World) => {
     world.insertResource(new Keyboard(targetHtmlElement));
-    world.addSystems(prepareSchedule, Keyboard.prepare);
-    world.addSystems(stopSchedule, Keyboard.cleanup);
+    world.addSystems(startSchedule, Keyboard.start);
+    world.addSystems(stopSchedule, Keyboard.stop);
   };
 type Code = KeyboardEvent["code"];
 export class Keyboard {
-  static plugin = keyboardPlugin;
-  static prepare = keyboardPrepare;
-  static cleanup = keyboardCleanup;
+  static plugin = plugin;
+  static start = start;
+  static stop = stop;
   #target: HTMLElement;
   #keys: Map<Code, number> = new Map();
   constructor(target: HTMLElement) {

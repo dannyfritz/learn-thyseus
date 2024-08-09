@@ -1,22 +1,22 @@
 import { World, Schedule, Res, Plugin } from 'thyseus';
 import { Vec2 } from '@thyseus/math';
 
-const mousePrepare = (mouse: Res<Mouse>) => {
+const start = (mouse: Res<Mouse>) => {
   mouse.start()
 }
-const mouseCleanup = (mouse: Res<Mouse>) => {
+const stop = (mouse: Res<Mouse>) => {
   mouse.stop();
 }
-const mousePlugin = (prepareSchedule: typeof Schedule, stopSchedule: typeof Schedule, targetHtmlElement: HTMLElement): Plugin =>
+const plugin = (startSchedule: typeof Schedule, stopSchedule: typeof Schedule, targetHtmlElement: HTMLElement): Plugin =>
   (world: World) => {
     world.insertResource(new Mouse(targetHtmlElement));
-    world.addSystems(prepareSchedule, Mouse.prepare);
-    world.addSystems(stopSchedule, Mouse.cleanup);
+    world.addSystems(startSchedule, Mouse.start);
+    world.addSystems(stopSchedule, Mouse.stop);
   };
 export class Mouse {
-  static plugin = mousePlugin;
-  static prepare = mousePrepare;
-  static cleanup = mouseCleanup;
+  static plugin = plugin;
+  static start = start;
+  static stop = stop;
   #buttons: Map<MouseEvent["button"], number> = new Map();
   pos: Vec2;
   target: HTMLElement;
