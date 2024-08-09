@@ -41,7 +41,7 @@ export function baseEnginePlugin(world: World) {
 	world
 		.addEventListener('start', start)
 		.addEventListener('stop', stop)
-		.addPlugin(Time.plugin(StartSchedule))
+		.addPlugin(Time.plugin(StartSchedule, BeforeSchedule))
 		.insertResource(new Engine())
 		.addSystems(StopSchedule, stopSystem)
 		// NOTE: NOOP added to prevent runSchedule from failing
