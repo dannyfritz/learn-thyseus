@@ -1,4 +1,5 @@
 import { World, Schedule, Res, Plugin } from 'thyseus';
+import { Vec2 } from '@thyseus/math';
 
 const keyboardPrepare = (keyboard: Res<Keyboard>) => {
   keyboard.start()

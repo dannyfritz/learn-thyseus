@@ -1,15 +1,15 @@
 import { World, Schedule, Entity, Query, Res, Tag, With, EventWriter, EventReader } from 'thyseus';
-import { Vec2 } from '@thyseus/math';
-import { Mouse } from "./Mouse";
-import { Keyboard } from "./Keyboard";
+import { Mouse } from "./engine/Mouse";
+import { Keyboard } from "./engine/Keyboard";
 import { Howl } from "howler";
+import { Position, updateVelocitySystem, Velocity } from './engine/Physics';
+import { AfterSchedule, baseEnginePlugin, PrepareSchedule, StopSchedule } from './engine/Loop';
 
 const kaboomSound = new URL(`../hit.wav`, import.meta.url).href;
-
-class Position extends Vec2 { };
-class Velocity extends Vec2 { };
-class IsPlayer extends Tag { };
-class IsBall extends Tag { };
+const sound = new Howl({
+  src: [kaboomSound]
+});
+sound.load();
 
 type Event =
 	| "NOOP"
@@ -21,34 +21,18 @@ class GameEvent {
 		this.event = event;
 	};
 }
+
+function cleanupEvents(gameEvents: EventWriter<GameEvent>) {
+	gameEvents.clear();
+}
  
+class IsPlayer extends Tag { };
+class IsBall extends Tag { };
+
 function kaboom(mouse: Res<Mouse>, gameEvents: EventWriter<GameEvent>) {
 	if (mouse.isPressed(0)) {
 		gameEvents.create(new GameEvent("KABOOM"));
 	}
-}
-
-function moveSystem(query: Query<[Position, Velocity]>) {
-	for (const [pos, vel] of query) {
-		pos.x += vel.x;
-		pos.y += vel.y;
-	}
-}
-
-const ballElement = document.querySelector("#ball")! as HTMLDivElement;
-
-function renderBallSystem(query: Query<[Position], With<IsBall>>) {
-	for (const [pos] of query) {
-		ballElement.style.left = `${pos.x}px`;
-		ballElement.style.top = `${pos.y}px`;
-	}
-}
-
-const cursorElement = document.querySelector("#cursor")! as HTMLDivElement;
-
-function renderCursorSystem(mouse: Res<Mouse>) {
-	cursorElement.style.left = `${mouse.pos.x}px`;
-	cursorElement.style.top = `${mouse.pos.y}px`;
 }
 
 function updatePlayerSystem(keyboard: Res<Keyboard>, player: Query<[Position], With<IsPlayer>>) {
@@ -68,7 +52,21 @@ function updatePlayerSystem(keyboard: Res<Keyboard>, player: Query<[Position], W
 	}
 }
 
+const ballElement = document.querySelector("#ball")! as HTMLDivElement;
+const cursorElement = document.querySelector("#cursor")! as HTMLDivElement;
 const playerElement = document.querySelector("#player")! as HTMLDivElement;
+
+function renderBallSystem(query: Query<[Position], With<IsBall>>) {
+	for (const [pos] of query) {
+		ballElement.style.left = `${pos.x}px`;
+		ballElement.style.top = `${pos.y}px`;
+	}
+}
+
+function renderCursorSystem(mouse: Res<Mouse>) {
+	cursorElement.style.left = `${mouse.pos.x}px`;
+	cursorElement.style.top = `${mouse.pos.y}px`;
+}
 
 function renderPlayerSystem(player: Query<[Position], With<IsPlayer>>) {
 	for (const [position] of player) {
@@ -79,49 +77,24 @@ function renderPlayerSystem(player: Query<[Position], With<IsPlayer>>) {
 
 function renderAudio(gameEvents: EventReader<GameEvent>) {
 	for (const gameEvent of gameEvents) {
-		const sound = new Howl({
-  		src: [kaboomSound]
-		});
-		sound.play();
+		if (gameEvent.event === "KABOOM") {
+			sound.play();
+		}
 	}
-}
-
-
-class PrepareSchedule extends Schedule { }
-class StopSchedule extends Schedule { }
-
-function cleanup(gameEvents: EventWriter<GameEvent>) {
-	gameEvents.clear();
-}
-
-let stopped = false;
-function start(world: World) {
-	world.runSchedule(PrepareSchedule);
-	async function loop() {
-		if (stopped) return;
-		await world.runSchedule(Schedule);
-		requestAnimationFrame(loop);
-	}
-	loop();
-}
-function stop(world: World) {
-	world.runSchedule(StopSchedule);
-	stopped = true;
 }
 
 const world = await new World()
-	.addEventListener('start', start)
-	.addEventListener('stop', stop)
+	.addPlugin(baseEnginePlugin)
 	.addPlugin(Mouse.plugin(PrepareSchedule, StopSchedule, document.body))
 	.addPlugin(Keyboard.plugin(PrepareSchedule, StopSchedule, document.body))
 	.addSystems(Schedule, kaboom)
 	.addSystems(Schedule, renderPlayerSystem)
 	.addSystems(Schedule, renderBallSystem)
 	.addSystems(Schedule, renderCursorSystem)
-	.addSystems(Schedule, moveSystem)
-	.addSystems(Schedule, updatePlayerSystem)
 	.addSystems(Schedule, renderAudio)
-	.addSystems(Schedule, cleanup)
+	.addSystems(Schedule, updateVelocitySystem)
+	.addSystems(Schedule, updatePlayerSystem)
+	.addSystems(AfterSchedule, cleanupEvents)
 	.prepare();
 
 function createBall(world: World): Entity {
@@ -143,4 +116,3 @@ createBall(world);
 createPlayer(world);
 
 world.start();
-setTimeout(() => world.stop(), 10_000);
