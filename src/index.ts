@@ -3,7 +3,8 @@ import { Mouse } from "./engine/Mouse";
 import { Keyboard } from "./engine/Keyboard";
 import { Howl } from "howler";
 import { Position, updateVelocitySystem, Velocity } from './engine/Physics';
-import { AfterSchedule, baseEnginePlugin, MainSchedule, StartSchedule, StopSchedule } from './engine/baseEngine';
+import { AfterSchedule, baseEnginePlugin, MainSchedule } from './engine/baseEngine';
+import { Time } from './engine/Time';
 
 const kaboomSound = new URL(`../hit.wav`, import.meta.url).href;
 const sound = new Howl({
@@ -35,19 +36,20 @@ function kaboom(mouse: Res<Mouse>, gameEvents: EventWriter<GameEvent>) {
 	}
 }
 
-function updatePlayerSystem(keyboard: Res<Keyboard>, player: Query<[Position], With<IsPlayer>>) {
+function updatePlayerSystem(time: Res<Time>, keyboard: Res<Keyboard>, player: Query<[Position], With<IsPlayer>>) {
+	const dt = time.dts;
 	for (const [position] of player) {
 		if (keyboard.isDown("KeyK")) {
-			position.y -= 1;
+			position.y -= 80 * dt;
 		}
 		if (keyboard.isDown("KeyJ")) {
-			position.y += 1;
+			position.y += 80 * dt;
 		}
 		if (keyboard.isDown("KeyH")) {
-			position.x -= 1;
+			position.x -= 80 * dt;
 		}
 		if (keyboard.isDown("KeyL")) {
-			position.x += 1;
+			position.x += 80 * dt;
 		}
 	}
 }
@@ -85,8 +87,6 @@ function renderAudio(gameEvents: EventReader<GameEvent>) {
 
 const world = await new World()
 	.addPlugin(baseEnginePlugin)
-	.addPlugin(Mouse.plugin(StartSchedule, StopSchedule, document.body))
-	.addPlugin(Keyboard.plugin(StartSchedule, StopSchedule, document.body))
 	.addSystems(MainSchedule, kaboom)
 	.addSystems(MainSchedule, renderPlayerSystem)
 	.addSystems(MainSchedule, renderBallSystem)

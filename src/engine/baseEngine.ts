@@ -1,5 +1,7 @@
 import { Res, Schedule, World } from "thyseus";
 import { Time } from "./Time";
+import { Mouse } from "./Mouse";
+import { Keyboard } from "./Keyboard";
 
 export class StartSchedule extends Schedule { }
 export class StopSchedule extends Schedule { }
@@ -42,6 +44,8 @@ export function baseEnginePlugin(world: World) {
 		.addEventListener('start', start)
 		.addEventListener('stop', stop)
 		.addPlugin(Time.plugin(StartSchedule, BeforeSchedule))
+		.addPlugin(Mouse.plugin(StartSchedule, StopSchedule, document.body))
+		.addPlugin(Keyboard.plugin(StartSchedule, StopSchedule, document.body))
 		.insertResource(new Engine())
 		.addSystems(StopSchedule, stopSystem)
 		// NOTE: NOOP added to prevent runSchedule from failing

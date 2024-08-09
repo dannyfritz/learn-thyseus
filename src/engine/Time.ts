@@ -9,13 +9,11 @@ const tick = (time: Res<Time>) => {
 const plugin = (startSchedule: typeof Schedule, beforeSchedule: typeof Schedule): Plugin =>
   (world: World) => {
     world.insertResource(new Time());
-    world.addSystems(startSchedule, Time.start);
+    world.addSystems(startSchedule, start);
     world.addSystems(beforeSchedule, tick);
   };
 export class Time {
   static plugin = plugin;
-  static start = start;
-  static stop = stop;
   dt: number = Number.EPSILON;
   dts: number = Number.EPSILON;
   time: number = 0;
