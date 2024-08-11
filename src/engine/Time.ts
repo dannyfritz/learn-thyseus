@@ -1,12 +1,13 @@
 import { Plugin, Res, Schedule, World } from "thyseus";
 
 const start = (time: Res<Time>) => {
-  time.start()
-}
+  time.start();
+};
 const tick = (time: Res<Time>) => {
   time.tick();
-}
-const plugin = (startSchedule: typeof Schedule, beforeSchedule: typeof Schedule): Plugin =>
+};
+const plugin =
+  (startSchedule: typeof Schedule, beforeSchedule: typeof Schedule): Plugin =>
   (world: World) => {
     world.insertResource(new Time());
     world.addSystems(startSchedule, start);
@@ -23,7 +24,7 @@ export class Time {
   }
   tick() {
     const now = performance.now();
-    this.dt = now - this.#lastTime 
+    this.dt = now - this.#lastTime;
     this.time += this.dt;
     this.dts = this.dt / 1000;
     this.#lastTime = now;

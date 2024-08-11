@@ -1,13 +1,18 @@
-import { World, Schedule, Res, Plugin } from 'thyseus';
-import { Vec2 } from '@thyseus/math';
+import { World, Schedule, Res, Plugin } from "thyseus";
+import { Vec2 } from "@thyseus/math";
 
 const start = (mouse: Res<Mouse>) => {
-  mouse.start()
-}
+  mouse.start();
+};
 const stop = (mouse: Res<Mouse>) => {
   mouse.stop();
-}
-const plugin = (startSchedule: typeof Schedule, stopSchedule: typeof Schedule, targetHtmlElement: HTMLElement): Plugin =>
+};
+const plugin =
+  (
+    startSchedule: typeof Schedule,
+    stopSchedule: typeof Schedule,
+    targetHtmlElement: HTMLElement,
+  ): Plugin =>
   (world: World) => {
     world.insertResource(new Mouse(targetHtmlElement));
     world.addSystems(startSchedule, Mouse.start);
@@ -68,4 +73,3 @@ export class Mouse {
     this.pos.y = event.clientY;
   }
 }
-

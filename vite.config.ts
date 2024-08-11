@@ -1,9 +1,9 @@
-import { thyseus } from '@thyseus/rollup-plugin-thyseus';
-import { defineConfig } from 'vite';
+import { thyseus } from "@thyseus/rollup-plugin-thyseus";
+import { defineConfig } from "vite";
 
 export default defineConfig({
-	plugins: [thyseus()],
-	build: {
-		target: 'esnext',
-	},
+  plugins: [thyseus()],
+  build: {
+    target: "esnext",
+  },
 });
