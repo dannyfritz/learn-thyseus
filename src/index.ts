@@ -73,16 +73,19 @@ function updatePlayerSystem(
   }
 }
 
-function renderBallSystem(query: Query<[Position], With<IsBall>>) {
+function renderBallSystem(render: Res<Render>, query: Query<[Position], With<IsBall>>) {
   for (const [pos] of query) {
+    render.circle(pos.x, pos.y);
   }
 }
 
-function renderCursorSystem(mouse: Res<Mouse>) {
+function renderCursorSystem(render: Res<Render>, mouse: Res<Mouse>) {
+    render.circle(mouse.pos.x, mouse.pos.y);
 }
 
-function renderPlayerSystem(player: Query<[Position], With<IsPlayer>>) {
+function renderPlayerSystem(render: Res<Render>, player: Query<[Position], With<IsPlayer>>) {
   for (const [position] of player) {
+    render.circle(position.x, position.y);
   }
 }
 
@@ -98,9 +101,9 @@ const world = await new World()
   .addPlugin(baseEnginePlugin)
   .addPlugin(Render.plugin(StartSchedule, StopSchedule, RenderSchedule))
   .addSystems(MainSchedule, kaboom)
-  // .addSystems(MainSchedule, renderPlayerSystem)
-  // .addSystems(MainSchedule, renderBallSystem)
-  // .addSystems(MainSchedule, renderCursorSystem)
+  .addSystems(MainSchedule, renderPlayerSystem)
+  .addSystems(MainSchedule, renderBallSystem)
+  .addSystems(MainSchedule, renderCursorSystem)
   .addSystems(MainSchedule, renderAudio)
   .addSystems(MainSchedule, updateVelocitySystem)
   .addSystems(MainSchedule, updatePlayerSystem)
